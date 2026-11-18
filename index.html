@@ -7,10 +7,39 @@
 <style>
   html,body{margin:0;height:100%;background:#0d1f14;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+  #ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,15,8,.6);z-index:10;padding:16px;box-sizing:border-box}
+  #ov[hidden]{display:none}
+  #ovCard{width:min(540px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#123020;color:#eaf7e4;border:2px solid rgba(255,220,140,.7);border-radius:18px;padding:20px 22px;box-sizing:border-box;font:500 15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  #ovCard h2{margin:0 0 4px;font-size:24px;color:#ffd45c;font-weight:900}
+  #ovCard .sub{color:#bfe3b5;margin:0 0 12px}
+  #ovCard label.f{display:block;margin:12px 0 4px;font-weight:700}
+  #ovCard input[type=text],#ovCard select{width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid #4d7a5a;background:#0b2216;color:#fff}
+  #ovCard input:focus-visible,#ovCard select:focus-visible,#ovCard button:focus-visible{outline:3px solid #ffd45c;outline-offset:1px}
+  #ovCard .chk{display:flex;gap:8px;align-items:flex-start;margin:14px 0 4px;font-size:14px;color:#cfe8c8}
+  #ovCard .row{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+  #ovCard .b{font:800 15px system-ui,sans-serif;padding:10px 18px;border-radius:12px;border:0;cursor:pointer}
+  #ovCard .b.pri{background:#ffd45c;color:#1d2a10} #ovCard .b.sec{background:#24452f;color:#eaf7e4}
+  #ovCard .b:disabled{opacity:.6;cursor:wait}
+  #ovCard .err{color:#ffb59a;min-height:20px;margin-top:8px;font-size:14px}
+  #ovCard .note{color:#9cc29a;font-size:13px;margin:10px 0 0}
+  #ovCard .tabs{display:flex;gap:6px;margin:6px 0 12px;flex-wrap:wrap}
+  #ovCard .tab{flex:1;min-width:120px;padding:8px;border-radius:10px;border:1px solid #4d7a5a;background:#0b2216;color:#cfe8c8;font:700 14px system-ui,sans-serif;cursor:pointer}
+  #ovCard .tab[aria-selected=true]{background:#ffd45c;color:#1d2a10;border-color:#ffd45c}
+  #ovCard table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+  #ovCard th{text-align:left;color:#ffd45c;font-weight:800;padding:6px;border-bottom:1px solid #2f5a3c;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  #ovCard td{padding:7px 6px;border-bottom:1px solid rgba(255,255,255,.07);overflow-wrap:anywhere}
+  #ovCard .r{text-align:right;white-space:nowrap}
+  #ovCard tr.me td{background:rgba(255,212,92,.15)}
+  #ovCard .flag{font-size:18px;margin-right:6px}
+  @media (max-width:440px){#ovCard .cn{display:none}}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#123020;color:#eaf7e4;border:1px solid rgba(255,220,140,.7);padding:10px 16px;border-radius:12px;font:700 14px system-ui,sans-serif;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:11;max-width:calc(100vw - 32px)}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<canvas id="c" aria-label="Rimba Games"></canvas>
+<div id="ov" hidden><div id="ovCard" role="dialog" aria-modal="true" aria-labelledby="ovTitle"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
 <script>
 "use strict";
 /* ============================================================
@@ -372,7 +401,7 @@ const fling = {
   finish() {
     this.state = 'done'; this.endT = 0;
     this.dist = Math.max(0, (this.b.x - this.piv[0]) / 10);
-    if (this.dist > this.best) { this.best = this.dist; store.set('fling', this.best); this.newBest = true; fanfare(); } else sfx(520, 0.2, 'triangle', 0.12);
+    if (this.dist > this.best) { this.best = this.dist; store.set('fling', this.best); this.newBest = true; fanfare(); onPersonalBest('fling', this.dist); } else sfx(520, 0.2, 'triangle', 0.12);
   },
   step(h) {
     const b = this.b;
@@ -451,7 +480,7 @@ const fling = {
     // HUD
     if (this.state === 'fly' && this.b.y < 0) label('height ' + ((GY - this.b.y) / 10).toFixed(0) + ' m', W / 2, 62, 14, '#20391f');
     text(this.dist.toFixed(1) + ' m', W / 2, 32, 30, '#fff');
-    label('Best ' + this.best.toFixed(1) + ' m', W - 64, 30, 15, '#fff', 'right');
+    label('Best ' + this.best.toFixed(1) + ' m', W - 112, 30, 15, '#fff', 'right');
     if (this.state === 'swing') {
       ctx.fillStyle = 'rgba(16,44,26,0.75)'; rr(400, 64, 200, 16, 8); ctx.fill();
       ctx.fillStyle = this.A > 1.2 ? '#7dff8a' : '#ffd45c'; rr(402, 66, 196 * clamp((this.A - 0.3) / 1.0, 0, 1), 12, 6); ctx.fill();
@@ -466,26 +495,26 @@ const fling = {
 // ============================================================
 //  GAME 2 — KINABALU SKATE
 //  Oren skates down Mt Kinabalu. TAP to jump over animals on the trail.
-//  The soil slowly slows him; slippery leech patches speed him up.
+//  The soil slowly slows him; rain-slick granite slabs speed him up.
 //  The run ends when he comes to a stop.
 // ============================================================
-const SK = { G: 900, MU: 0.14, DRAG: 0.0006, JUMP: 480, STEP: 4, START: 40 };
+const SK = { G: 900, MU: 0.14, DRAG: 0.0006, JUMP: 520, STEP: 4, START: 40 };
 const ANIMALS = {
   mousedeer: { w: 34, h: 34, name: 'mousedeer' },
   pig: { w: 70, h: 44, name: 'bearded pig' },
   bear: { w: 46, h: 70, name: 'sun bear' },
-  elephant: { w: 110, h: 90, name: 'pygmy elephant' }
+  elephant: { w: 88, h: 70, name: 'pygmy elephant' }   // drawn at 80% size: they ARE pygmies
 };
 const skate = {
   id: 'skate',
   enter() {
     Object.assign(this, { state: 'ready', t: 0, x: SK.START, y: 0, v: 0, vx: 0, vy: 0, air: false, ang: 0, spin: 0, stun: 0,
       cam: 0, camY: 0, parts: new Parts(), msgs: [], best: store.get('skate', 0), newBest: false, endT: 0, stopT: 0, dist: 0,
-      rideT: 0, leechIdx: -1, hy: [0] });
+      rideT: 0, slabIdx: -1, hy: [0] });
     this.extend(20000);
-    this.leeches = []; this.animals = [];
+    this.slabs = []; this.animals = [];
     let x = 700;
-    while (x < 400000) { this.leeches.push({ x, len: 130 + Math.random() * 60 }); x += 500 + Math.random() * 700; }
+    while (x < 400000) { this.slabs.push({ x, len: 130 + Math.random() * 60 }); x += 500 + Math.random() * 700; }
     const kinds = Object.keys(ANIMALS); x = 1100;
     while (x < 400000) {
       const k = kinds[Math.floor(Math.random() * (x < 2500 ? 2 : kinds.length))];   // easy animals first
@@ -511,7 +540,7 @@ const skate = {
     const f = x / SK.STEP, i = Math.floor(f);
     return lerp(this.hy[i], this.hy[i + 1], f - i);
   },
-  leechAt(x) { for (let i = 0; i < this.leeches.length; i++) { const l = this.leeches[i]; if (l.x > x) return -1; if (x <= l.x + l.len) return i; } return -1; },
+  slabAt(x) { for (let i = 0; i < this.slabs.length; i++) { const l = this.slabs[i]; if (l.x > x) return -1; if (x <= l.x + l.len) return i; } return -1; },
   down() {
     if (this.state === 'ready') { this.state = 'ride'; this.v = 160; sfx(330, 0.15, 'triangle', 0.12, 200); pushMsg(this, 'Here we go!'); }
     else if (this.state === 'ride' && !this.air && this.stun <= 0) {
@@ -523,7 +552,7 @@ const skate = {
   up() {},
   finish() {
     this.state = 'done'; this.endT = 0;
-    if (this.dist > this.best) { this.best = this.dist; store.set('skate', this.best); this.newBest = true; fanfare(); } else sfx(520, 0.2, 'triangle', 0.12);
+    if (this.dist > this.best) { this.best = this.dist; store.set('skate', this.best); this.newBest = true; fanfare(); onPersonalBest('skate', this.dist); } else sfx(520, 0.2, 'triangle', 0.12);
   },
   bump(an) {
     an.bumped = true; an.hitT = 0; this.stun = 0.7;
@@ -541,11 +570,11 @@ const skate = {
         this.parts.add(this.x, gy, 6, { col: '#8a6a45', sp: 90, life: 0.4, r: 3 });
       }
     } else {
-      const a = Math.atan(this.slopeAt(this.x)), s = Math.sin(a), c = Math.cos(a), li = this.leechAt(this.x), leech = li >= 0;
-      const acc = SK.G * s - (leech ? 0 : SK.MU * SK.G * c) - SK.DRAG * this.v * this.v + (leech ? 420 : 0);
+      const a = Math.atan(this.slopeAt(this.x)), s = Math.sin(a), c = Math.cos(a), li = this.slabAt(this.x), slick = li >= 0;
+      const acc = SK.G * s - (slick ? 0 : SK.MU * SK.G * c) - SK.DRAG * this.v * this.v + (slick ? 420 : 0);
       this.v = Math.max(0, this.v + acc * h);
       this.x += this.v * c * h; this.y = this.ground(this.x);
-      if (leech && li !== this.leechIdx) { this.leechIdx = li; sfx(260, 0.3, 'sine', 0.14, 700); pushMsg(this, 'Slippery leeches!', '#9dffb8'); }
+      if (slick && li !== this.slabIdx) { this.slabIdx = li; sfx(260, 0.3, 'sine', 0.14, 700); pushMsg(this, 'Slippery wet granite!', '#bfe9ff'); }
     }
     // animals
     for (const an of this.animals) {
@@ -602,6 +631,7 @@ const skate = {
       ctx.fillStyle = '#111'; circ(-13, -60, 2); ctx.fill();
       ctx.fillStyle = '#fff'; circ(-6, -66, 1.6); ctx.fill(); circ(2, -66, 1.6); ctx.fill();
     } else {                             // Bornean pygmy elephant
+      ctx.scale(0.8, 0.8);
       ctx.fillStyle = '#7f7f86'; ctx.fillRect(-40, -26, 16, 26); ctx.fillRect(-18, -26, 16, 26); ctx.fillRect(14, -26, 16, 26); ctx.fillRect(34, -26, 14, 26);
       ctx.fillStyle = '#93939b'; ell(6, -48, 48, 32); ctx.fill();
       ctx.fillStyle = '#88888f'; circ(-38, -60, 22); ctx.fill();
@@ -610,17 +640,25 @@ const skate = {
       ctx.fillStyle = '#fffdf3'; ctx.beginPath(); ctx.moveTo(-50, -48); ctx.quadraticCurveTo(-58, -42, -60, -50); ctx.lineTo(-52, -52); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#111'; circ(-44, -66, 2.4); ctx.fill();
       limb(52, -56, 58, -40, 3, 3, '#7f7f86');
+      ctx.scale(1.25, 1.25);
     }
     if (hit) { ctx.fillStyle = '#fff'; rr(-30, -an.h - 34, 60, 22, 8); ctx.fill(); label('Hmph!', 0, -an.h - 23, 13, '#333', 'center', '800'); }
     ctx.restore();
   },
-  drawLeeches(l) {
-    ctx.strokeStyle = 'rgba(140,220,210,0.55)'; ctx.lineWidth = 9; ctx.lineCap = 'round';
-    ctx.beginPath(); for (let x = l.x; x <= l.x + l.len; x += 10) { const y = this.ground(x) - 2; x === l.x ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke();
-    for (let i = 0; i < 6; i++) {
-      const x = l.x + 12 + i * (l.len - 24) / 5, y = this.ground(x) - 4, arch = 4 + 4 * Math.abs(Math.sin(this.t * 4 + i));
-      ctx.strokeStyle = '#3b2a1e'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x - 7, y); ctx.quadraticCurveTo(x, y - arch * 2, x + 7, y); ctx.stroke();
-      ctx.fillStyle = '#c7a44a'; circ(x + 7, y, 1.5); ctx.fill();
+  drawSlab(l) {    // rain-slick granite slab (Kinabalu's summit is bare granite)
+    const path = dy => { ctx.beginPath(); for (let x = l.x; x <= l.x + l.len; x += 10) { const y = this.ground(x) + dy; x === l.x ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } };
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#66717d'; ctx.lineWidth = 15; path(2); ctx.stroke();
+    ctx.strokeStyle = '#a3afbb'; ctx.lineWidth = 8; path(-1); ctx.stroke();
+    ctx.strokeStyle = 'rgba(225,245,255,0.9)'; ctx.lineWidth = 2.5; path(-4); ctx.stroke();
+    ctx.strokeStyle = '#59636e'; ctx.lineWidth = 1.5;
+    for (let i = 1; i < 4; i++) { const cx = l.x + i * l.len / 4, cy = this.ground(cx); ctx.beginPath(); ctx.moveTo(cx, cy - 3); ctx.lineTo(cx + 4, cy + 3); ctx.lineTo(cx + 1, cy + 7); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    for (let i = 0; i < 3; i++) { const gx = l.x + (this.t * 70 + i * l.len / 3) % l.len; circ(gx, this.ground(gx) - 4, 2.2); ctx.fill(); }
+    ctx.strokeStyle = 'rgba(200,230,255,0.7)'; ctx.lineWidth = 1.5;
+    for (let i = 0; i < 9; i++) {
+      const rx = l.x + hash(l.x + i) * l.len, ph = (this.t * 1.6 + hash(i * 3 + l.x)) % 1, ry = this.ground(rx) - 80 + ph * 70;
+      ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 4, ry + 10); ctx.stroke();
     }
   },
   drawKinabalu() {
@@ -660,7 +698,7 @@ const skate = {
       label(i * 50 + ' m', mx, my - 43, 13, '#4a3015', 'center', '800');
     }
     if (x0 < 200) { ctx.fillStyle = '#c0392b'; ctx.fillRect(-10, this.ground(-10) - 70, 4, 70); ctx.fillStyle = '#ffd45c'; ctx.beginPath(); ctx.moveTo(-6, this.ground(-10) - 70); ctx.lineTo(24, this.ground(-10) - 60); ctx.lineTo(-6, this.ground(-10) - 50); ctx.closePath(); ctx.fill(); }
-    for (const l of this.leeches) { if (l.x + l.len < x0) continue; if (l.x > x1) break; this.drawLeeches(l); }
+    for (const l of this.slabs) { if (l.x + l.len < x0) continue; if (l.x > x1) break; this.drawSlab(l); }
     for (const an of this.animals) { if (an.x + 80 < x0) continue; if (an.x - 80 > x1) break; this.drawAnimal(an); }
     // Oren on his wooden skateboard
     ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.ang + this.spin);
@@ -675,9 +713,9 @@ const skate = {
 
     text(this.dist.toFixed(1) + ' m', W / 2, 32, 30, '#fff');
     if (this.state === 'ride') label(Math.round(this.v * 0.12) + ' km/h', W / 2, 62, 14, '#20391f');
-    label('Best ' + this.best.toFixed(1) + ' m', W - 64, 30, 15, '#fff', 'right');
+    label('Best ' + this.best.toFixed(1) + ' m', W - 112, 30, 15, '#fff', 'right');
     if (this.state === 'ready') hintBar('TAP to push off from the summit of Mt Kinabalu');
-    else if (this.state === 'ride' && this.rideT < 5) hintBar('TAP to jump over animals  ·  ride the leeches for speed');
+    else if (this.state === 'ride' && this.rideT < 5) hintBar('TAP to jump over animals  ·  wet granite = extra speed');
     drawMsgs(this);
     if (this.state === 'done') resultPanel(['Oren skated', this.dist.toFixed(1) + ' m', 'Best: ' + this.best.toFixed(1) + ' m'], this.newBest, this.endT, 'Tap to skate again');
   }
@@ -702,7 +740,7 @@ const plunge = {
       if (this.round >= 3) {
         this.state = 'final'; this.stT = 0;
         const tot = this.scores.reduce((a, b) => a + b, 0);
-        if (tot > this.best) { this.best = tot; store.set('plunge', tot); this.newBest = true; fanfare(); }
+        if (tot > this.best) { this.best = tot; store.set('plunge', tot); this.newBest = true; fanfare(); onPersonalBest('plunge', tot); }
       } else this.newRound();
     } else if (this.state === 'final' && this.stT > 0.6) this.enter();
   },
@@ -793,7 +831,7 @@ const plunge = {
     const tot = this.scores.reduce((a, b) => a + b, 0);
     text('Dive ' + Math.min(3, this.round + (this.state === 'run' || this.state === 'air' ? 1 : 0)) + ' / 3', 260, 32, 24, '#fff');
     text('Total ' + tot.toFixed(1), W / 2 + 60, 32, 24, '#ffd45c');
-    label('Best ' + this.best.toFixed(1), W - 64, 30, 15, '#fff', 'right');
+    label('Best ' + this.best.toFixed(1), W - 112, 30, 15, '#fff', 'right');
     if (this.state === 'run') hintBar(this.round === 0 ? 'TAP to jump — the closer to the end of the branch, the higher' : 'TAP to jump!');
     if (this.state === 'air') hintBar(this.holding ? 'Tucked & spinning — LET GO to straighten out!' : 'HOLD to tuck & spin');
     drawMsgs(this);
@@ -813,7 +851,7 @@ const plunge = {
 const SCENES = { fling, skate, plunge };
 const GAMES = [
   { id: 'fling', name: 'Pangolin Fling', desc: ['Hold to swing higher,', 'release to let go.'], unit: ' m' },
-  { id: 'skate', name: 'Kinabalu Skate', desc: ['Tap to jump the animals,', 'ride the leeches for speed.'], unit: ' m' },
+  { id: 'skate', name: 'Kinabalu Skate', desc: ['Tap to jump the animals,', 'slide on wet granite.'], unit: ' m' },
   { id: 'plunge', name: 'Proboscis Plunge', desc: ['Tap to jump, hold to tuck,', 'let go for a clean entry.'], unit: ' pts' }
 ];
 const menu = {
@@ -868,20 +906,183 @@ const menu = {
       label(b ? 'Best: ' + b.toFixed(1) + c.g.unit : 'Not played yet', c.x + c.w / 2, c.y + 252, 14, '#ffd45c');
       label('▶ PLAY', c.x + c.w / 2, c.y + 274, 13, `rgba(255,255,255,${0.55 + 0.35 * Math.sin(this.t * 4)})`, 'center', '800');
     }
-    label('Click / tap a game  ·  or press 1, 2, 3  ·  Esc returns here', W / 2, 500, 14, '#e8ffe0');
-    label('A playful jungle parody. No animals were harmed — bumped animals just grumble.', W / 2, 522, 12, 'rgba(232,255,224,0.75)', 'center', '500');
+    ctx.fillStyle = '#ffd45c'; rr(...HSBTN, 17); ctx.fill();
+    label('🏆  ' + (board.online() ? 'World High Scores' : 'High Scores'), HSBTN[0] + HSBTN[2] / 2, HSBTN[1] + 18, 16, '#1d2a10', 'center', '800');
+    label('Tap a game or press 1, 2, 3  ·  Esc returns here  ·  No animals were harmed', W / 2, 516, 13, '#e8ffe0', 'center', '600');
   }
 };
+
+// ============================================================
+//  HIGH SCORES — world top 20 via Supabase, or this device only
+//  Setup: run supabase/setup.sql, then paste your project URL and
+//  public "anon" key below (see README). Blank = device-only board.
+// ============================================================
+const SUPABASE_URL = '';        // e.g. 'https://abcdefgh.supabase.co'
+const SUPABASE_ANON_KEY = '';   // Project Settings → API → anon public key (safe to publish; table rules protect it)
+const CFG = Object.assign({ url: SUPABASE_URL, key: SUPABASE_ANON_KEY }, window.RIMBA_CONFIG || {});
+
+const fmtScore = (game, v) => (+v).toFixed(1) + (game === 'plunge' ? ' pts' : ' m');
+const board = {
+  online() { return !!(CFG.url && CFG.key); },
+  api(path) { return CFG.url.replace(/\/+$/, '') + '/rest/v1/' + path; },
+  headers() { return { 'Content-Type': 'application/json', apikey: CFG.key, Authorization: 'Bearer ' + CFG.key }; },
+  async top(game) {
+    if (!this.online()) return this.localTop(game);
+    const r = await fetch(this.api('rpc/top_scores'), { method: 'POST', headers: this.headers(), body: JSON.stringify({ g: game, n: 20 }) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return (await r.json()).map(x => ({ name: x.name, country: x.country, score: +x.score }));
+  },
+  async submit(game, name, country, score) {
+    score = Math.round(score * 10) / 10;
+    this.localAdd(game, name, country, score);          // always keep a device copy
+    if (!this.online()) return 'local';
+    const r = await fetch(this.api('scores'), { method: 'POST', headers: { ...this.headers(), Prefer: 'return=minimal' }, body: JSON.stringify({ game, name, country, score }) });
+    if (!r.ok) {
+      let msg = 'HTTP ' + r.status;
+      try { const j = await r.json(); if (/not allowed/.test(j.message)) msg = 'name not allowed'; else if (/too many/.test(j.message)) msg = 'too many submissions, try later'; } catch (_) {}
+      throw new Error(msg);
+    }
+    return 'online';
+  },
+  localTop(game) { return store.get('board_' + game, []); },
+  localAdd(game, name, country, score) {   // best score per player, top 20
+    const a = this.localTop(game), i = a.findIndex(e => e.name.toLowerCase() === name.toLowerCase() && e.country === country);
+    if (i >= 0) { if (a[i].score >= score) return; a.splice(i, 1); }
+    a.push({ name, country, score }); a.sort((x, y) => y.score - x.score);
+    store.set('board_' + game, a.slice(0, 20));
+  }
+};
+
+// ---- countries ----
+const CC = ('AF AX AL DZ AS AD AO AI AQ AG AR AM AW AU AT AZ BS BH BD BB BY BE BZ BJ BM BT BO BQ BA BW BV BR IO BN BG BF BI CV KH CM CA KY CF TD CL CN CX CC CO KM CG CD CK CR CI HR CU CW CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FK FO FJ FI FR GF PF TF GA GM GE DE GH GI GR GL GD GP GU GT GG GN GW GY HT HM VA HN HK HU IS IN ID IR IQ IE IM IL IT JM JP JE JO KZ KE KI KP KR KW KG LA LV LB LS LR LY LI LT LU MO MG MW MY MV ML MT MH MQ MR MU YT MX FM MD MC MN ME MS MA MZ MM NA NR NP NL NC NZ NI NE NG NU NF MK MP NO OM PK PW PS PA PG PY PE PH PN PL PT PR QA RE RO RU RW BL SH KN LC MF PM VC WS SM ST SA SN RS SC SL SG SX SK SI SB SO ZA GS SS ES LK SD SR SJ SE CH SY TW TJ TZ TH TL TG TK TO TT TN TR TM TC TV UG UA AE GB US UM UY UZ VU VE VN VG VI WF EH YE ZM ZW XK').split(' ');
+let regionNames = null; try { regionNames = new Intl.DisplayNames(['en'], { type: 'region' }); } catch (_) {}
+const countryName = c => { try { return (regionNames && regionNames.of(c)) || c; } catch (_) { return c; } };
+const flag = c => /^[A-Z]{2}$/.test(c) ? String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65)) : '🏳️';
+const COUNTRIES = CC.map(c => ({ c, n: countryName(c) })).sort((a, b) => a.n.localeCompare(b.n));
+function guessCountry() {
+  for (const l of (navigator.languages || [navigator.language || ''])) { const m = /[-_]([A-Za-z]{2})\b/.exec(l || ''); if (m && CC.includes(m[1].toUpperCase())) return m[1].toUpperCase(); }
+  return '';
+}
+// first line of defence only; the database re-checks names (supabase/setup.sql)
+const BAD = ['fuck', 'shit', 'cunt', 'bitch', 'asshole', 'bastard', 'whore', 'slut', 'nazi', 'hitler', 'pukimak', 'kimak', 'lancau', 'pantat'];
+const cleanName = s => s.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+const nameOk = s => { const z = s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ''); return z.length > 0 && !BAD.some(w => z.includes(w)); };
+
+// ---- DOM overlays ----
+const $ov = document.getElementById('ov'), $card = document.getElementById('ovCard'), $toast = document.getElementById('toast');
+const overlayOpen = () => !$ov.hidden;
+const put = (node, ...kids) => node.replaceChildren(...kids.filter(k => k != null));   // skips empty slots instead of printing "null"
+function closeOverlay() { $ov.hidden = true; put($card); }
+$ov.addEventListener('pointerdown', e => { if (e.target === $ov) closeOverlay(); });
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') n.className = v; else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else if (v === true) n.setAttribute(k, ''); else if (v !== false && v != null) n.setAttribute(k, v);
+  }
+  for (const c of kids) if (c != null) n.append(c);
+  return n;
+}
+let toastTimer = 0;
+function toast(s) { $toast.textContent = s; $toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $toast.classList.remove('show'), 2800); }
+
+// Name + country form. score == null → just edit the saved player profile.
+function openSubmit(game, score) {
+  const pr = store.get('profile', null) || { name: '', country: guessCountry(), auto: true };
+  const g = GAMES.find(x => x.id === game), withScore = score != null;
+  const name = el('input', { type: 'text', id: 'pName', maxlength: 16, autocomplete: 'nickname', value: pr.name, placeholder: 'e.g. Oren', required: true });
+  const sel = el('select', { id: 'pCountry', required: true }, el('option', { value: '' }, 'Choose your country…'),
+    ...COUNTRIES.map(o => el('option', { value: o.c, selected: o.c === pr.country }, flag(o.c) + '  ' + o.n)));
+  const auto = el('input', { type: 'checkbox', id: 'pAuto', checked: pr.auto !== false });
+  const err = el('div', { class: 'err', role: 'alert' });
+  const send = el('button', { class: 'b pri', type: 'submit' }, withScore ? 'Submit score' : 'Save');
+  const form = el('form', { novalidate: true, onsubmit: async e => {
+      e.preventDefault();
+      const n = cleanName(name.value), c = sel.value;
+      if (!n) { err.textContent = 'Please enter a name.'; name.focus(); return; }
+      if (!nameOk(n)) { err.textContent = 'Please choose a friendlier name.'; name.focus(); return; }
+      if (!c) { err.textContent = 'Please choose your country.'; sel.focus(); return; }
+      store.set('profile', { name: n, country: c, auto: auto.checked });
+      if (!withScore) { closeOverlay(); toast('Saved: playing as ' + n); return; }
+      send.disabled = true; send.textContent = 'Sending…';
+      try {
+        const where = await board.submit(game, n, c, score);
+        closeOverlay(); openBoard(game);
+        toast(where === 'online' ? 'Score sent to the world board 🌏' : 'Score saved on this device');
+      } catch (ex) {
+        send.disabled = false; send.textContent = 'Try again';
+        err.textContent = 'Could not send (' + ex.message + '). Your score is saved on this device.';
+      }
+    } },
+    el('label', { class: 'f', for: 'pName' }, 'Player name'), name,
+    el('label', { class: 'f', for: 'pCountry' }, 'Country'), sel,
+    el('label', { class: 'chk' }, auto, el('span', {}, 'Remember me and send my future personal bests automatically')),
+    err,
+    el('div', { class: 'row' }, el('button', { class: 'b sec', type: 'button', onclick: closeOverlay }, withScore ? 'Not now' : 'Cancel'), send),
+    el('p', { class: 'note' }, board.online() ? 'Names and countries are shown publicly on the world board.' : 'The online board is not set up yet, so scores stay on this device.'));
+  put($card, 
+    el('h2', { id: 'ovTitle' }, withScore ? 'New personal best! 🏆' : 'Your player name'),
+    withScore ? el('p', { class: 'sub' }, g.name + ': ' + fmtScore(game, score)) : null, form);
+  $ov.hidden = false;
+  setTimeout(() => (pr.name ? send : name).focus(), 30);
+}
+
+function openBoard(game) {
+  if (!GAMES.some(g => g.id === game)) game = 'fling';
+  const me = store.get('profile', null), body = el('div', { 'aria-live': 'polite' });
+  const tabs = el('div', { class: 'tabs', role: 'tablist' }, ...GAMES.map(g => el('button', { class: 'tab', role: 'tab', type: 'button', 'data-id': g.id, onclick: () => show(g.id) }, g.name)));
+  let current = game;
+  async function show(id) {
+    current = id;
+    for (const t of tabs.children) t.setAttribute('aria-selected', String(t.dataset.id === id));
+    put(body, el('p', { class: 'note' }, 'Loading…'));
+    let rows, warn = null;
+    try { rows = await board.top(id); } catch (ex) { rows = board.localTop(id); warn = 'Could not reach the world board, so these are this device\'s scores.'; }
+    if (current !== id) return;
+    const medal = i => ['🥇', '🥈', '🥉'][i] || String(i + 1);
+    put(body, 
+      warn ? el('p', { class: 'err' }, warn) : null,
+      rows.length ? el('table', {},
+        el('thead', {}, el('tr', {}, el('th', {}, '#'), el('th', {}, 'Player'), el('th', {}, 'Country'), el('th', { class: 'r' }, 'Score'))),
+        el('tbody', {}, ...rows.map((r, i) => el('tr', { class: me && r.name.toLowerCase() === me.name.toLowerCase() && r.country === me.country ? 'me' : null },
+          el('td', {}, medal(i)), el('td', {}, r.name),
+          el('td', { title: countryName(r.country) }, el('span', { class: 'flag', 'aria-hidden': 'true' }, flag(r.country)), el('span', { class: 'cn' }, countryName(r.country))),
+          el('td', { class: 'r' }, fmtScore(id, r.score))))))
+      : el('p', { class: 'note' }, 'No scores yet. Be the first!'));
+  }
+  put($card, 
+    el('h2', { id: 'ovTitle' }, board.online() ? '🌏 World High Scores' : '🏆 High Scores'),
+    el('p', { class: 'sub' }, board.online() ? 'Top 20 players worldwide (each player\'s best run).' : 'Top 20 on this device. The online board is not set up yet.'),
+    tabs, body,
+    el('div', { class: 'row' },
+      el('button', { class: 'b sec', type: 'button', onclick: () => openSubmit(null, null) }, me ? 'Playing as ' + me.name + ' · change' : 'Set my name'),
+      el('button', { class: 'b pri', type: 'button', onclick: closeOverlay }, 'Close')));
+  $ov.hidden = false;
+  show(game);
+}
+
+// called by each game when the player beats their own best on this device
+function onPersonalBest(game, score) {
+  if (!(score > 0)) return;
+  const pr = store.get('profile', null);
+  if (pr && pr.auto && pr.name && pr.country) {
+    board.submit(game, pr.name, pr.country, score).then(
+      w => toast(w === 'online' ? 'New best sent to the world board 🌏' : 'New best saved on this device'),
+      ex => toast('World board unreachable (' + ex.message + '), so it\'s saved on this device'));
+  } else setTimeout(() => { if (!overlayOpen()) openSubmit(game, score); }, 900);
+}
 
 // ============================================================
 //  SCENE MANAGER, INPUT, LOOP
 // ============================================================
 let scene = menu;
 function go(s) { scene = s; s.enter(); }
-const BACK = [12, 12, 96, 36], MUTE = [W - 52, 12, 40, 36];
+const BACK = [12, 12, 96, 36], MUTE = [W - 52, 12, 40, 36], TROPHY = [W - 100, 12, 40, 36], HSBTN = [W / 2 - 130, 460, 260, 36];
 const inRect = (x, y, r) => x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3];
 function drawUI() {
   if (scene !== menu) { ctx.fillStyle = 'rgba(16,44,26,0.75)'; rr(...BACK, 10); ctx.fill(); label('◀ Menu', BACK[0] + 48, BACK[1] + 18, 15, '#fff'); }
+  ctx.fillStyle = 'rgba(16,44,26,0.75)'; rr(...TROPHY, 10); ctx.fill(); label('🏆', TROPHY[0] + 20, TROPHY[1] + 19, 18, '#fff');
   ctx.fillStyle = 'rgba(16,44,26,0.75)'; rr(...MUTE, 10); ctx.fill();
   ctx.strokeStyle = '#fff'; ctx.fillStyle = '#fff'; ctx.lineWidth = 2;
   const mx = MUTE[0] + 12, my = MUTE[1] + 18;
@@ -899,6 +1100,7 @@ cv.addEventListener('pointerdown', e => {
   e.preventDefault();
   const [x, y] = toLogical(e);
   if (inRect(x, y, MUTE)) { toggleMute(); return; }
+  if (inRect(x, y, TROPHY) || (scene === menu && inRect(x, y, HSBTN))) { openBoard(scene.id || 'fling'); return; }
   if (scene !== menu && inRect(x, y, BACK)) { go(menu); return; }
   ptr = true; try { cv.setPointerCapture(e.pointerId); } catch (_) {}
   try { audio(); } catch (_) {}
@@ -909,12 +1111,13 @@ cv.addEventListener('pointerup', ptrUp); cv.addEventListener('pointercancel', pt
 cv.addEventListener('contextmenu', e => e.preventDefault());
 let keyHeld = false;
 addEventListener('keydown', e => {
+  if (overlayOpen()) { if (e.code === 'Escape') closeOverlay(); return; }   // typing in the name box must not drive the game
   if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (e.repeat || keyHeld) return; keyHeld = true; try { audio(); } catch (_) {} scene.down(-1, -1); }
   else if (e.code === 'Escape') go(menu);
   else if (e.code === 'KeyM') toggleMute();
   else if (scene === menu && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) go(SCENES[GAMES[+e.code.slice(-1) - 1].id]);
 });
-addEventListener('keyup', e => { if ((e.code === 'Space' || e.code === 'Enter') && keyHeld) { keyHeld = false; scene.up(); } });
+addEventListener('keyup', e => { if (overlayOpen()) return; if ((e.code === 'Space' || e.code === 'Enter') && keyHeld) { keyHeld = false; scene.up(); } });
 addEventListener('blur', () => { if (ptr || keyHeld) { ptr = keyHeld = false; scene.up(); } });
 
 let last = performance.now();
@@ -927,7 +1130,8 @@ function frame(now) {
   }
   ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * offX, dpr * offY);
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
-  scene.update(dt); scene.draw(); drawUI();
+  if (!overlayOpen()) scene.update(dt);   // game pauses behind the score dialogs
+  scene.draw(); drawUI();
   ctx.restore();
   requestAnimationFrame(frame);
 }

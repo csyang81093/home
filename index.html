@@ -1545,6 +1545,26 @@ function frame(now) {
 }
 menu.enter();
 requestAnimationFrame(frame);
+
+// ---------- shareable links ----------
+//   …/rimba?scores            → open the high-score board (first tab)
+//   …/rimba?scores=bowling    → open the board on one game's tab
+//   …/rimba#highscores        → same, as a #link (also: #scores, #highscores=skate)
+//   …/rimba?play=skate        → jump straight into a game (fling, skate, plunge, hornbill, bowling)
+function openFromLink() {
+  try {
+    const q = new URLSearchParams(location.search), h = decodeURIComponent(location.hash.replace(/^#/, '')).toLowerCase();
+    const play = (q.get('play') || '').toLowerCase();
+    if (SCENES[play]) go(SCENES[play]);
+    let board = null;
+    if (q.has('scores')) board = (q.get('scores') || '').toLowerCase();
+    else if (q.has('highscores')) board = (q.get('highscores') || '').toLowerCase();
+    else { const m = /^(?:high)?scores?(?:[=/](\w+))?$/.exec(h); if (m) board = m[1] || ''; }
+    if (board !== null) openBoard(SCENES[board] ? board : (SCENES[play] ? play : 'fling'));
+  } catch (_) {}
+}
+openFromLink();
+addEventListener('hashchange', openFromLink);
 // test hook (harmless in production)
 window.__rimba = { go: id => go(SCENES[id] || menu), get scene() { return scene; } };
 </script>

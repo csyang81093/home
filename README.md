@@ -51,3 +51,16 @@ What the database enforces (tested on PostgreSQL 16):
 delete from public.scores where name ilike '%badname%';
 insert into public.banned_words(word) values ('newbadword');
 ```
+
+## Shareable links
+
+Add these to the end of the game's address (examples use `https://www.itwosy.com/rimba`):
+
+| Link | Opens |
+|---|---|
+| `…/rimba?scores` | The high score board |
+| `…/rimba?scores=fling` · `skate` · `plunge` · `hornbill` · `bowling` | The board on that game's tab |
+| `…/rimba#highscores` | The board (use this form if your host strips `?` from links) |
+| `…/rimba?play=skate` | Straight into a game |
+
+If the game is inside a Wix **Embed HTML** (iframe) element, the link must go on the embed's own address (the iframe `src`), not the Wix page's address. For a separate high scores page on Wix, add a page with its own embed pointing at `<game file URL>?scores`.

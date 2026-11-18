@@ -2,14 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0d1f14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rimba Games">
+<meta name="description" content="Rimba Games: five jungle mini-games set in Borneo, starring Oren the Orangutan and Kena the Hornbill. Free to play in your browser.">
+<meta property="og:title" content="Rimba Games">
+<meta property="og:description" content="Five jungle mini-games set in Borneo, starring Oren the Orangutan and Kena the Hornbill.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%A7%3C/text%3E%3C/svg%3E">
 <title>Rimba Games</title>
 <style>
-  html,body{margin:0;height:100%;background:#0d1f14;overflow:hidden}
-  canvas{display:block;width:100vw;height:100vh;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
-  #ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,15,8,.6);z-index:10;padding:16px;box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#0d1f14;overflow:hidden;overscroll-behavior:none}
+  body{position:fixed;inset:0}
+  canvas{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+  #ui{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:10}
+  #ui.rot{transform-origin:0 0;transform:rotate(90deg)}   /* upright phone: dialogs turn with the game */
+  #ov{position:absolute;inset:0;pointer-events:auto;display:flex;align-items:center;justify-content:center;background:rgba(5,15,8,.6);z-index:10;padding:16px;box-sizing:border-box}
   #ov[hidden]{display:none}
-  #ovCard{width:min(540px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#123020;color:#eaf7e4;border:2px solid rgba(255,220,140,.7);border-radius:18px;padding:20px 22px;box-sizing:border-box;font:500 15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  #ovCard{width:min(540px,100%);max-height:calc(100% - 32px);overflow:auto;background:#123020;color:#eaf7e4;border:2px solid rgba(255,220,140,.7);border-radius:18px;padding:20px 22px;box-sizing:border-box;font:500 15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  #ovCard{display:flex;flex-direction:column}
+  #ovCard > *{flex-shrink:0}
+  #ovCard .scroll{flex:1 1 auto;min-height:60px;overflow:auto}   /* only the score list scrolls; title, tabs and buttons stay put */
+  #ovCard th{position:sticky;top:0;background:#123020;z-index:1}
   #ovCard h2{margin:0 0 4px;font-size:24px;color:#ffd45c;font-weight:900}
   #ovCard .sub{color:#bfe3b5;margin:0 0 12px}
   #ovCard label.f{display:block;margin:12px 0 4px;font-weight:700}
@@ -32,14 +48,28 @@
   #ovCard tr.me td{background:rgba(255,212,92,.15)}
   #ovCard .flag{font-size:18px;margin-right:6px}
   @media (max-width:440px){#ovCard .cn{display:none}}
-  #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#123020;color:#eaf7e4;border:1px solid rgba(255,220,140,.7);padding:10px 16px;border-radius:12px;font:700 14px system-ui,sans-serif;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:11;max-width:calc(100vw - 32px)}
+  /* short screens (phones): compact dialogs so the buttons stay on screen */
+  #ui.short #ovCard{width:min(680px,100%);padding:12px 16px;font-size:14px;border-radius:14px}
+  #ui.short #ovCard h2{font-size:19px}
+  #ui.short #ovCard .sub{margin:0 0 6px;font-size:13px}
+  #ui.short #ovCard label.f{margin:6px 0 2px}
+  #ui.short #ovCard input[type=text],#ui.short #ovCard select{padding:7px 10px}
+  #ui.short #ovCard .chk{margin:8px 0 2px;font-size:13px}
+  #ui.short #ovCard .err{min-height:0;margin-top:4px}
+  #ui.short #ovCard .tabs{grid-template-columns:repeat(5,1fr);gap:4px;margin:4px 0 6px}
+  #ui.short #ovCard .tab{padding:5px 3px;font-size:11.5px}
+  #ui.short #ovCard td,#ui.short #ovCard th{padding:3px 6px}
+  #ui.short #ovCard .row{margin-top:8px}
+  #ui.short #ovCard .b{padding:7px 14px;font-size:14px}
+  #ui.short #ovCard .note{margin:6px 0 0;font-size:12px}
+  #toast{position:absolute;left:50%;bottom:24px;transform:translate(-50%,20px);background:#123020;color:#eaf7e4;border:1px solid rgba(255,220,140,.7);padding:10px 16px;border-radius:12px;font:700 14px system-ui,sans-serif;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:11;max-width:calc(100vw - 32px)}
   #toast.show{opacity:1;transform:translate(-50%,0)}
 </style>
-</head>
+<script id="wix-site-script" src="https://manage.wix.com/_api/headless-business-setup/v1/headless-business/site-script.js" data-client-id="1171ad8e-8893-4e63-9b1b-c4032666bb7d" async></script></head>
 <body>
 <canvas id="c" aria-label="Rimba Games"></canvas>
-<div id="ov" hidden><div id="ovCard" role="dialog" aria-modal="true" aria-labelledby="ovTitle"></div></div>
-<div id="toast" role="status" aria-live="polite"></div>
+<div id="ui"><div id="ov" hidden><div id="ovCard" role="dialog" aria-modal="true" aria-labelledby="ovTitle"></div></div>
+<div id="toast" role="status" aria-live="polite"></div></div>
 <script>
 "use strict";
 /* ============================================================
@@ -50,14 +80,22 @@
 // ---------- canvas & scaling (fixed 960x540 logical, letterboxed) ----------
 const W = 960, H = 540, GY = 470;           // GY = ground line
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-let scale = 1, offX = 0, offY = 0, dpr = 1;
+let scale = 1, offX = 0, offY = 0, dpr = 1, rot = false;
+const COARSE = matchMedia('(pointer: coarse)').matches;   // phones and tablets
 function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   const w = innerWidth, h = innerHeight;
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
-  scale = Math.min(w / W, h / H); offX = (w - W * scale) / 2; offY = (h - H * scale) / 2;
+  rot = COARSE && h > w * 1.1;   // phone held upright: draw the game sideways so it fills the whole screen
+  const ui = document.getElementById('ui');
+  if (ui) { ui.classList.toggle('rot', rot); ui.classList.toggle('short', (rot ? w : h) < 560); Object.assign(ui.style, rot ? { left: w + 'px', width: h + 'px', height: w + 'px' } : { left: '0', width: '100%', height: '100%' }); }
+  const vw = rot ? h : w, vh = rot ? w : h;
+  scale = Math.min(vw / W, vh / H); offX = (vw - W * scale) / 2; offY = (vh - H * scale) / 2;
 }
-addEventListener('resize', resize); resize();
+addEventListener('resize', resize);
+addEventListener('orientationchange', () => setTimeout(resize, 250));
+if (window.visualViewport) visualViewport.addEventListener('resize', resize);
+resize();
 
 // ---------- utils ----------
 const TAU = Math.PI * 2;
@@ -1436,7 +1474,7 @@ function openSubmit(game, score) {
 
 function openBoard(game) {
   if (!GAMES.some(g => g.id === game)) game = 'fling';
-  const me = store.get('profile', null), body = el('div', { 'aria-live': 'polite' });
+  const me = store.get('profile', null), body = el('div', { class: 'scroll', 'aria-live': 'polite' });
   const tabs = el('div', { class: 'tabs', role: 'tablist' }, ...GAMES.map(g => el('button', { class: 'tab', role: 'tab', type: 'button', 'data-id': g.id, onclick: () => show(g.id) }, g.name)));
   let current = game;
   async function show(id) {
@@ -1486,10 +1524,26 @@ function onPersonalBest(game, score) {
 // ============================================================
 let scene = menu;
 function go(s) { scene = s; s.enter(); }
-const BACK = [12, 12, 96, 36], MUTE = [W - 52, 12, 40, 36], TROPHY = [W - 100, 12, 40, 36], HSBTN = [W / 2 - 130, 460, 260, 36];
+const BACK = [12, 12, 96, 36], MUTE = [W - 52, 12, 40, 36], TROPHY = [W - 100, 12, 40, 36], HSBTN = [W / 2 - 130, 460, 260, 36], HOME = [12, H - 48, 140, 36];
+const HOME_URL = 'https://www.itwosy.com/';
+function goHome() { try { window.top.location.href = HOME_URL; } catch (_) { location.href = HOME_URL; } }
+// phones: first tap goes full screen (Android) and locks landscape where the browser allows it
+let fsTried = false;
+function tryFullscreen() {
+  if (fsTried || !COARSE) return; fsTried = true;
+  let framed = true; try { framed = window.top !== window.self; } catch (_) {}
+  if (framed) return;
+  const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) return;
+  try {
+    const p = req.call(el, { navigationUI: 'hide' });
+    if (p && p.then) p.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (_) {} }).catch(() => {});
+  } catch (_) {}
+}
 const inRect = (x, y, r) => x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3];
 function drawUI() {
   if (scene !== menu) { ctx.fillStyle = 'rgba(16,44,26,0.75)'; rr(...BACK, 10); ctx.fill(); label('◀ Menu', BACK[0] + 48, BACK[1] + 18, 15, '#fff'); }
+  else { ctx.fillStyle = 'rgba(16,44,26,0.75)'; rr(...HOME, 10); ctx.fill(); label('◀ itwosy.com', HOME[0] + HOME[2] / 2, HOME[1] + 18, 15, '#fff'); }
   ctx.fillStyle = 'rgba(16,44,26,0.75)'; rr(...TROPHY, 10); ctx.fill(); label('🏆', TROPHY[0] + 20, TROPHY[1] + 19, 18, '#fff');
   ctx.fillStyle = 'rgba(16,44,26,0.75)'; rr(...MUTE, 10); ctx.fill();
   ctx.strokeStyle = '#fff'; ctx.fillStyle = '#fff'; ctx.lineWidth = 2;
@@ -1501,12 +1555,17 @@ function drawUI() {
   ctx.stroke();
 }
 function toggleMute() { muted = !muted; store.set('muted', muted); }
-function toLogical(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left - offX) / scale, (e.clientY - r.top - offY) / scale]; }
+function toLogical(e) {
+  const r = cv.getBoundingClientRect(); let x = e.clientX - r.left, y = e.clientY - r.top;
+  if (rot) { const vx = y, vy = r.width - x; x = vx; y = vy; }   // undo the sideways drawing
+  return [(x - offX) / scale, (y - offY) / scale];
+}
 
 let ptr = false;
 cv.addEventListener('pointerdown', e => {
   e.preventDefault();
   const [x, y] = toLogical(e);
+  if (scene === menu && inRect(x, y, HOME)) { goHome(); return; }
   if (inRect(x, y, MUTE)) { toggleMute(); return; }
   if (inRect(x, y, TROPHY) || (scene === menu && inRect(x, y, HSBTN))) { openBoard(scene.id || 'fling'); return; }
   if (scene !== menu && inRect(x, y, BACK)) { go(menu); return; }
@@ -1516,6 +1575,7 @@ cv.addEventListener('pointerdown', e => {
 });
 const ptrUp = e => { if (!ptr) return; ptr = false; scene.up(); };
 cv.addEventListener('pointerup', ptrUp); cv.addEventListener('pointercancel', ptrUp);
+cv.addEventListener('pointerup', () => { try { audio(); } catch (_) {} tryFullscreen(); });   // a lifted finger unlocks sound on iPhone and full screen on Android
 cv.addEventListener('contextmenu', e => e.preventDefault());
 let keyHeld = false;
 addEventListener('keydown', e => {
@@ -1532,11 +1592,12 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.033, (now - last) / 1000); last = now;
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0d1f14'; ctx.fillRect(0, 0, cv.width, cv.height);
-  if (offY > 70) { // portrait phone: nudge the player to rotate
+  if (!rot && offY > 70) { // tall window on a computer: nudge to widen it
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    label('↻  Turn your phone sideways for a bigger jungle', innerWidth / 2, offY / 2, 15, '#e8ffe0');
+    label('↔  Widen the window for a bigger jungle', innerWidth / 2, offY / 2, 15, '#e8ffe0');
   }
-  ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * offX, dpr * offY);
+  if (rot) ctx.setTransform(0, dpr * scale, -dpr * scale, 0, dpr * (innerWidth - offY), dpr * offX);   // upright phone: sideways, full screen
+  else ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * offX, dpr * offY);
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
   if (!overlayOpen()) scene.update(dt);   // game pauses behind the score dialogs
   scene.draw(); drawUI();

@@ -522,6 +522,11 @@ const skate = {
     const kinds = Object.keys(ANIMALS); x = 1100;
     while (x < 400000) {
       const k = kinds[Math.floor(Math.random() * (x < 2500 ? 2 : kinds.length))];   // easy animals first
+      // keep animals off the wet granite, with a little run-out after each slab so players can react
+      for (const l of this.slabs) {
+        if (l.x > x + ANIMALS[k].w / 2 + 30) break;
+        if (x - ANIMALS[k].w / 2 < l.x + l.len + 120) x = l.x + l.len + 120 + ANIMALS[k].w / 2;
+      }
       this.animals.push({ x, k, ...ANIMALS[k], bumped: false, cleared: false, t: Math.random() * 5, hitT: 0 });
       x += 750 + Math.random() * 900;
     }

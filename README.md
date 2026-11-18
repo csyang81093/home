@@ -1,6 +1,6 @@
 # Rimba Games 🦧
 
-Four quick jungle mini-games starring **Oren the Orangutan**, set across Borneo: the rainforests of Sarawak and the slopes of Mt Kinabalu.
+Five quick jungle mini-games starring **Oren the Orangutan**, set across Borneo: the rainforests of Sarawak and the slopes of Mt Kinabalu.
 It's a single `index.html` file with no build step, no assets and no dependencies. All the art is drawn in code.
 
 **Play:** open `index.html` in a browser, or turn on GitHub Pages for this repo (Settings → Pages → deploy from branch, root).
@@ -11,8 +11,9 @@ It's a single `index.html` file with no build step, no assets and no dependencie
 | **Kinabalu Skate** | Mousedeer, bearded pigs, sun bears, pygmy elephants | Oren skates down Mt Kinabalu. Tap to jump over animals. The soil slowly slows him, and rain-slick granite slabs speed him up. The run ends when he stops. |
 | **Proboscis Plunge** | Proboscis monkey (they really do leap into rivers) | Tap to jump (later is higher), hold to tuck and somersault, let go to straighten for a clean entry. Three rhinoceros-hornbill judges score 3 dives. |
 | **Hornbill Flight** | Rhinoceros hornbill (Sarawak is the "Land of the Hornbills") | Tap to flap through gaps between hanging fig roots and mossy stumps. Figs are bonus points. A bump ends the run, and the hornbill lands dizzy but unhurt. |
+| **Coconut Bowling** | Coconut and bamboo pins on an Iban longhouse veranda (*ruai*) | Tap to lock the aim, then tap to set the power. 5 frames with real strike and spare scoring, so the maximum is 150. Coconuts are lumpy, so each roll wobbles a little. |
 
-Controls: mouse, touch, or **Space**. **Esc** = menu, **M** = mute, **1–4** pick a game on the menu.
+Controls: mouse, touch, or **Space**. **Esc** = menu, **M** = mute, **1–5** pick a game on the menu.
 Best scores are saved in the browser.
 
 No animals are harmed. Every animal launches, lands and celebrates safely.
@@ -23,7 +24,7 @@ Out of the box, the 🏆 board keeps a **top 20 on each player's device**. To sh
 
 1. Create a free Supabase account and a new project. Pick the region closest to most of your players (e.g. Singapore).
 2. In the dashboard, open **SQL Editor → New query**, paste the whole of [`supabase/setup.sql`](supabase/setup.sql), and click **Run**.
-   **Already set up before Hornbill Flight was added?** Run the latest `setup.sql` again. It's safe to re-run, keeps every existing score, and adds the new game. Until you do, hornbill scores are rejected by the database.
+   **Set up before a new game was added (e.g. Hornbill Flight, Coconut Bowling)?** Run the latest `setup.sql` again. It's safe to re-run, keeps every existing score, and adds the new games. Until you do, the database rejects scores for the new games.
 3. Open **Project Settings → API**. Copy the **Project URL** and the **anon public** key.
 4. In `index.html`, find these two lines near `HIGH SCORES` and paste your values in:
    ```js
@@ -41,7 +42,7 @@ How it works:
 What the database enforces (tested on PostgreSQL 16):
 - Names are 1–16 characters with no HTML, and are checked against a hidden banned-words list, including disguised spellings like "F.u_c K".
 - Countries must be valid two-letter codes.
-- Scores must be possible: the plunge maxes out at 90, and fling and skate are capped at 20,000 m.
+- Scores must be possible: the plunge maxes out at 90 and bowling at 150, hornbill and bowling scores must be whole numbers, and fling and skate are capped at 20,000 m.
 - Each name can submit at most 5 scores per minute.
 - Submission times are set by the server and can't be backdated.
 

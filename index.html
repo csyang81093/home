@@ -44,7 +44,7 @@
 "use strict";
 /* ============================================================
    RIMBA GAMES — five jungle mini-games set in Borneo.
-   Starring Oren the Orangutan. Everything is drawn in code.
+   Starring Oren the Orangutan and Kena the Hornbill. Everything is drawn in code.
    ============================================================ */
 
 // ---------- canvas & scaling (fixed 960x540 logical, letterboxed) ----------
@@ -1282,7 +1282,7 @@ const menu = {
     drawHornbill(((this.t * 70) % 1200) - 120, 40 + Math.sin(this.t) * 10, this.t, 0.7);
     drawOrangutan(120, 92, { lh: [-30, 20], rh: [34, -40 + Math.sin(this.t * 8) * 8], mood: 'happy', s: 0.8 });
     text('RIMBA GAMES', W / 2, 62, 54, '#ffd45c');
-    text('Starring Oren the Orangutan  ·  Borneo', W / 2, 110, 17, '#f2ffe8', 'center', '600');
+    text('Starring Oren the Orangutan and Kena the Hornbill  ·  Borneo', W / 2, 110, 17, '#f2ffe8', 'center', '600');
     for (const c of this.cards()) {
       panel(c.x, c.y, c.w, c.h);
       const k = (c.w - 20) / 240;   // previews are drawn at 240 px wide, then scaled to fit the card

@@ -1,6 +1,6 @@
 # Rimba Games 🦧
 
-Five quick jungle mini-games starring **Oren the Orangutan**, set across Borneo: the rainforests of Sarawak and the slopes of Mt Kinabalu.
+Five quick jungle mini-games starring **Oren the Orangutan** and **Kena the Hornbill**, set across Borneo: the rainforests of Sarawak and the slopes of Mt Kinabalu.
 It's a single `index.html` file with no build step, no assets and no dependencies. All the art is drawn in code.
 
 **Play:** open `index.html` in a browser, or turn on GitHub Pages for this repo (Settings → Pages → deploy from branch, root).

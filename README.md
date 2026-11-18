@@ -9,8 +9,8 @@ It's a single `index.html` file with no build step, no assets and no dependencie
 |---|---|---|
 | **Pangolin Fling** | Pangolin (curls into a ball) | Hold to pump Oren's vine swing higher, release to let go. Release angle matters. Fly through hornbills for a boost. |
 | **Kinabalu Skate** | Mousedeer, bearded pigs, sun bears, pygmy elephants | Oren skates down Mt Kinabalu. Tap to jump over animals. The soil slowly slows him, and rain-slick granite slabs speed him up. The run ends when he stops. |
-| **Proboscis Plunge** | Proboscis monkey (they really do leap into rivers) | Tap to jump (later is higher), hold to tuck and somersault, let go to straighten for a clean entry. Three rhinoceros-hornbill judges score 3 dives. |
-| **Hornbill Flight** | Rhinoceros hornbill (Sarawak is the "Land of the Hornbills") | Tap to flap through gaps between hanging fig roots and mossy stumps. Figs are bonus points. A bump ends the run, and the hornbill lands dizzy but unhurt. |
+| **Proboscis Plunge** | Proboscis monkey (they really do leap into rivers) | Tap to jump (later is higher), hold to tuck and somersault, let go to straighten for a clean entry. Three rhinoceros-hornbill judges score 3 dives, led by head judge Kena, who gives her verdict on each one. |
+| **Hornbill Flight** | Kena, a rhinoceros hornbill (Sarawak is the "Land of the Hornbills") | Tap to help Kena flap through gaps between hanging fig roots and mossy stumps. Figs are bonus points. A bump ends the run, and the hornbill lands dizzy but unhurt. |
 | **Coconut Bowling** | Coconut and bamboo pins on an Iban longhouse veranda (*ruai*) | Tap to lock the aim, then tap to set the power. 5 frames with real strike and spare scoring, so the maximum is 150. Coconuts are lumpy, so each roll wobbles a little. |
 
 Controls: mouse, touch, or **Space**. **Esc** = menu, **M** = mute, **1–5** pick a game on the menu.

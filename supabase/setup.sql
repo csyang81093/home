@@ -5,17 +5,22 @@
 -- 1. Scores table ---------------------------------------------------------------
 create table if not exists public.scores (
   id          bigint generated always as identity primary key,
-  game        text        not null check (game in ('fling', 'skate', 'plunge')),
+  game        text        not null,
   name        text        not null check (char_length(name) between 1 and 16 and name !~ '[<>]'),
   country     text        not null check (country ~ '^[A-Z]{2}$'),
   score       numeric(7,1) not null check (score >= 0),
-  created_at  timestamptz not null default now(),
-  -- reject obviously impossible scores (plunge max is 3 dives x 3 judges x 10)
-  constraint plausible_score check (
-    (game = 'plunge' and score <= 90) or
-    (game = 'fling'  and score <= 20000) or
-    (game = 'skate'  and score <= 20000)
-  )
+  created_at  timestamptz not null default now()
+);
+-- Game list + score limits are (re)applied every run, so re-running this file
+-- upgrades an existing board when a new game is added.
+alter table public.scores drop constraint if exists scores_game_check;
+alter table public.scores add constraint scores_game_check check (game in ('fling', 'skate', 'plunge', 'hornbill'));
+alter table public.scores drop constraint if exists plausible_score;
+alter table public.scores add constraint plausible_score check (   -- reject obviously impossible scores
+  (game = 'plunge'   and score <= 90) or      -- 3 dives x 3 judges x 10
+  (game = 'fling'    and score <= 20000) or
+  (game = 'skate'    and score <= 20000) or
+  (game = 'hornbill' and score <= 5000 and score = round(score))
 );
 create index if not exists scores_game_score_idx on public.scores (game, score desc);
 

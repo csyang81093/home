@@ -1,6 +1,6 @@
 # Rimba Games 🦧
 
-Three quick jungle mini-games starring **Oren the Orangutan**, set across Borneo: the rainforests of Sarawak and the slopes of Mt Kinabalu.
+Four quick jungle mini-games starring **Oren the Orangutan**, set across Borneo: the rainforests of Sarawak and the slopes of Mt Kinabalu.
 It's a single `index.html` file with no build step, no assets and no dependencies. All the art is drawn in code.
 
 **Play:** open `index.html` in a browser, or turn on GitHub Pages for this repo (Settings → Pages → deploy from branch, root).
@@ -10,8 +10,9 @@ It's a single `index.html` file with no build step, no assets and no dependencie
 | **Pangolin Fling** | Pangolin (curls into a ball) | Hold to pump Oren's vine swing higher, release to let go. Release angle matters. Fly through hornbills for a boost. |
 | **Kinabalu Skate** | Mousedeer, bearded pigs, sun bears, pygmy elephants | Oren skates down Mt Kinabalu. Tap to jump over animals. The soil slowly slows him, and rain-slick granite slabs speed him up. The run ends when he stops. |
 | **Proboscis Plunge** | Proboscis monkey (they really do leap into rivers) | Tap to jump (later is higher), hold to tuck and somersault, let go to straighten for a clean entry. Three rhinoceros-hornbill judges score 3 dives. |
+| **Hornbill Flight** | Rhinoceros hornbill (Sarawak is the "Land of the Hornbills") | Tap to flap through gaps between hanging fig roots and mossy stumps. Figs are bonus points. A bump ends the run, and the hornbill lands dizzy but unhurt. |
 
-Controls: mouse, touch, or **Space**. **Esc** = menu, **M** = mute, **1/2/3** pick a game on the menu.
+Controls: mouse, touch, or **Space**. **Esc** = menu, **M** = mute, **1–4** pick a game on the menu.
 Best scores are saved in the browser.
 
 No animals are harmed. Every animal launches, lands and celebrates safely.
@@ -22,6 +23,7 @@ Out of the box, the 🏆 board keeps a **top 20 on each player's device**. To sh
 
 1. Create a free Supabase account and a new project. Pick the region closest to most of your players (e.g. Singapore).
 2. In the dashboard, open **SQL Editor → New query**, paste the whole of [`supabase/setup.sql`](supabase/setup.sql), and click **Run**.
+   **Already set up before Hornbill Flight was added?** Run the latest `setup.sql` again. It's safe to re-run, keeps every existing score, and adds the new game. Until you do, hornbill scores are rejected by the database.
 3. Open **Project Settings → API**. Copy the **Project URL** and the **anon public** key.
 4. In `index.html`, find these two lines near `HIGH SCORES` and paste your values in:
    ```js
